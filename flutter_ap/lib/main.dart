@@ -1,53 +1,67 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_ap/models/Gif.dart';
-import 'package:http/http.dart';
-import 'package:http/http.dart' as http; 
-void main() => runApp(MyApp());
- 
-class MyApp extends StatefulWidget {
+import 'package:http/http.dart' as http;
+void main() {
+    runApp(MyApp());
+} 
+ class MyApp extends StatelessWidget {
   @override
-  _MyAppState createState() => _MyAppState();
-}
-class _MyAppState extends State<MyApp>{
-  
-Future<List<Git>> _listadoGifs;
-
-Future<List<Git>> _getGifs() async{
-  final response =await http.get("https://rickandmortyapi.com/api/character");
- if (response.statusCode == 200){
-   print(response.body);
-
- } else {
-   throw Exception("Fallo la conexión");
- } 
-}
-
-
-
-@override
-void initState(){
-    //todo: implement initState
-    super.initState();
-
-    _getGifs();
-}
-
-  @override
-  Widget build(BuildContext context) {
+   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Material App',
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('Material App Bar'),
-        ),
-        body: Center(
-          child: Container(
-            child: Text('HOLA'),
-          ),
-        ),
+      home: DataFromAPI(),
+    );
+  }
+}
+class DataFromAPI extends StatefulWidget{
+  @override
+  _DataFromAPIState createState() => _DataFromAPIState();
+
+}
+class _DataFromAPIState extends State<DataFromAPI>{
+ getUserData() async{
+  var response =
+   await http.get(Uri.https('rickandmortyapi.com', 'api/character'));
+  var jsonData = jsonDecode(response.body);
+  List<User> users = [];
+  for(var u in jsonData){
+    User user = User(u['name'], u['status']);
+    users.add(user);
+  }
+  print(users.length);
+  return users;
+ }
+ @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('User Data'),
+      ),
+      body: Container(
+        child: Card(child: FutureBuilder(
+          future: getUserData(),
+          builder: (context, snapshot) {
+            if(snapshot.data == null){
+              return Container(
+                child: Center(
+                  child: Text('Loading...'),
+                  ),
+              );
+            } else return ListView.builder(
+              itemCount: snapshot.data.length,
+            itemBuilder: (context, i){
+              return ListTile(
+                title: Text(snapshot.data[i].name),
+              );
+            });
+          },
+        ),),
       ),
     );
   }
-} 
+}
 
-
+class User {
+  final String name, status;
+  User(this.name, this.status);
+}
